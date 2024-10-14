@@ -60,7 +60,8 @@ impl Plugin for TextInputPlugin {
                     update_value.after(keyboard),
                     blink_cursor,
                     show_hide_cursor,
-                    update_style,
+                    update_font,
+                    update_color,
                     show_hide_placeholder,
                     scroll_with_cursor,
                 )
@@ -621,10 +622,7 @@ fn create(
             })
             .id();
 
-        let placeholder_style = placeholder
-            .text_style
-            .clone()
-            .unwrap_or_else(|| placeholder_style(&style.0));
+        let placeholder_color = placeholder.text_color.unwrap_or_else(|| placeholder_color(&text_color.0));
 
         let placeholder_visible = inactive.0 && text_input.0.is_empty();
 
@@ -632,7 +630,7 @@ fn create(
             .spawn((
                 Text::new(&placeholder.value),
                 TextLayout::new_with_linebreak(LineBreak::NoWrap),
-                placeholder_style,
+                placeholder_color,
                 Name::new("TextInputPlaceholderInner"),
                 TextInputPlaceholderInner,
                 if placeholder_visible {
@@ -844,7 +842,7 @@ fn masked_value(value: &str, mask: Option<char>) -> String {
     )
 }
 
-fn placeholder_style(font: &TextFont, color: &TextColor) -> (TextFont, TextColor) {
+fn placeholder_color(color: &TextColor) -> TextColor {
     let color = color.with_alpha(color.alpha() * 0.25);
-    (font.clone(), TextColor(color))
+    TextColor(color)
 }

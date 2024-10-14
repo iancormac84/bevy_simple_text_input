@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 use bevy_simple_text_input::{
-    TextInput, TextInputPlugin, TextInputSettings, TextInputTextStyle, TextInputValue,
+    TextInput, TextInputPlugin, TextInputSettings, TextInputTextFont, TextInputTextColor, TextInputValue,
 };
 
 const BORDER_COLOR_ACTIVE: Color = Color::srgb(0.75, 0.52, 0.99);
@@ -26,11 +26,11 @@ struct IncValueButton;
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
-    let text_style = TextStyle {
+    let text_font = TextFont {
         font_size: 40.,
-        color: TEXT_COLOR,
         ..default()
     };
+    let text_color = TextColor(TEXT_COLOR);
 
     commands
         .spawn(NodeBundle {
@@ -58,7 +58,8 @@ fn setup(mut commands: Commands) {
                     ..default()
                 },
                 TextInput,
-                TextInputTextStyle(text_style.clone()),
+                TextInputTextFont(text_font.clone()),
+                TextInputTextColor(text_color),
                 TextInputValue("1".to_string()),
                 TextInputSettings {
                     retain_on_submit: true,
@@ -83,7 +84,7 @@ fn setup(mut commands: Commands) {
                     IncValueButton,
                 ))
                 .with_children(|parent| {
-                    parent.spawn((Text::new("+"), text_style.clone()));
+                    parent.spawn((Text::new("+"), text_font.clone(), text_color));
                 });
         });
 }
