@@ -764,13 +764,13 @@ fn show_hide_placeholder(
 
 fn update_font(
     mut input_query: Query<
-        (Entity, &TextInputTextFont, &TextInputInactive),
+        (Entity, &TextInputTextFont),
         Changed<TextInputTextFont>,
     >,
     inner_text: InnerText,
     mut writer: UiTextWriter,
 ) {
-    for (entity, font, inactive) in &mut input_query {
+    for (entity, font) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
             continue;
         };
