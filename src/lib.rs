@@ -67,7 +67,8 @@ impl Plugin for TextInputPlugin {
                     .in_set(TextInputSystem),
             )
             .register_type::<TextInputSettings>()
-            .register_type::<TextInputTextStyle>()
+            .register_type::<TextInputTextFont>()
+            .register_type::<TextInputTextColor>()
             .register_type::<TextInputInactive>()
             .register_type::<TextInputCursorTimer>()
             .register_type::<TextInputInner>()
@@ -96,7 +97,8 @@ const CURSOR_HANDLE: Handle<Font> = Handle::weak_from_u128(10482756907980398621)
 #[derive(Component)]
 #[require(
     TextInputSettings,
-    TextInputTextStyle,
+    TextInputTextFont,
+    TextInputTextColor,
     TextInputInactive,
     TextInputCursorTimer,
     TextInputValue,
@@ -105,9 +107,13 @@ const CURSOR_HANDLE: Handle<Font> = Handle::weak_from_u128(10482756907980398621)
 )]
 pub struct TextInput;
 
-/// The Bevy `TextStyle` that will be used when creating the text input's inner Bevy `TextBundle`.
+/// The Bevy `TextFont` that will be used when creating the text input's inner Bevy `TextBundle`.
 #[derive(Component, Default, Reflect)]
-pub struct TextInputTextStyle(pub TextStyle);
+pub struct TextInputTextFont(pub TextFont);
+
+/// The Bevy `TextColor` that will be used when creating the text input's inner Bevy `TextBundle`.
+#[derive(Component, Default, Reflect)]
+pub struct TextInputTextColor(pub TextColor);
 
 /// If true, the text input does not respond to keyboard events and the cursor is hidden.
 #[derive(Component, Default, Reflect)]
@@ -244,10 +250,14 @@ pub struct TextInputValue(pub String);
 pub struct TextInputPlaceholder {
     /// The placeholder text.
     pub value: String,
-    /// The style to use when rendering the placeholder text.
+    /// The font to use when rendering the placeholder text.
     ///
     /// If `None`, the text input style will be used with alpha value of `0.25`.
-    pub text_style: Option<TextStyle>,
+    pub text_font: Option<TextFont>,
+    /// The color to use when rendering the placeholder text.
+    ///
+    /// If `None`, the text color will be used with alpha value of `0.25`.
+    pub text_color: Option<TextColor>,
 }
 
 #[derive(Component, Reflect)]
@@ -557,7 +567,8 @@ fn create(
     mut commands: Commands,
     query: Query<(
         Entity,
-        &TextInputTextStyle,
+        &TextInputTextFont,
+        &TextInputTextColor,
         &TextInputValue,
         Option<&TextInputCursorPos>,
         &TextInputInactive,
@@ -565,7 +576,7 @@ fn create(
         &TextInputPlaceholder,
     )>,
 ) {
-    if let Ok((entity, style, text_input, maybe_cursor_pos, inactive, settings, placeholder)) =
+    if let Ok((entity, text_font, text_color, text_input, maybe_cursor_pos, inactive, settings, placeholder)) =
         &query.get(trigger.entity())
     {
         let cursor_pos = match maybe_cursor_pos {
@@ -590,22 +601,23 @@ fn create(
                 TextInputInner,
             ))
             .with_children(|parent| {
-                parent.spawn((TextSpan::new(values.0), style.0.clone()));
+                parent.spawn((TextSpan::new(values.0), text_font.0.clone(), text_color.0));
 
                 parent.spawn((
                     TextSpan::new(values.1),
-                    TextStyle {
+                    TextFont {
                         font: CURSOR_HANDLE,
-                        color: if inactive.0 {
+                        ..text_font.0.clone()
+                    },
+                    TextColor(
+                        if inactive.0 {
                             Color::NONE
                         } else {
-                            style.0.color
-                        },
-                        ..style.0.clone()
-                    },
+                            *text_color.0
+                        })
                 ));
 
-                parent.spawn((TextSpan::new(values.2), style.0.clone()));
+                parent.spawn((TextSpan::new(values.2), text_font.0.clone(), text_color.0));
             })
             .id();
 
@@ -665,7 +677,7 @@ fn show_hide_cursor(
     mut input_query: Query<
         (
             Entity,
-            &TextInputTextStyle,
+            &TextInputTextColor,
             &mut TextInputCursorTimer,
             &TextInputInactive,
         ),
@@ -674,15 +686,15 @@ fn show_hide_cursor(
     inner_text: InnerText,
     mut writer: UiTextWriter,
 ) {
-    for (entity, style, mut cursor_timer, inactive) in &mut input_query {
+    for (entity, color, mut cursor_timer, inactive) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
             continue;
         };
 
-        writer.style(inner, 1).color = if inactive.0 {
+        writer.color(inner, 1).0 = if inactive.0 {
             Color::NONE
         } else {
-            style.0.color
+            *color.0
         };
 
         cursor_timer.timer.reset();
@@ -693,7 +705,7 @@ fn show_hide_cursor(
 fn blink_cursor(
     mut input_query: Query<(
         Entity,
-        &TextInputTextStyle,
+        &TextInputTextColor,
         &mut TextInputCursorTimer,
         Ref<TextInputInactive>,
     )>,
@@ -701,7 +713,7 @@ fn blink_cursor(
     mut writer: UiTextWriter,
     time: Res<Time>,
 ) {
-    for (entity, style, mut cursor_timer, inactive) in &mut input_query {
+    for (entity, color, mut cursor_timer, inactive) in &mut input_query {
         if inactive.0 {
             continue;
         }
@@ -711,7 +723,7 @@ fn blink_cursor(
             cursor_timer.should_reset = false;
 
             if let Some(inner) = inner_text.inner_entity(entity) {
-                writer.style(inner, 1).color = style.0.color;
+                writer.color(inner, 1).0 = *color.0;
             };
 
             continue;
@@ -725,10 +737,10 @@ fn blink_cursor(
             continue;
         };
 
-        if writer.style(inner, 1).color != Color::NONE {
-            writer.style(inner, 1).color = Color::NONE;
+        if writer.color(inner, 1).0 != Color::NONE {
+            writer.color(inner, 1).0 = Color::NONE;
         } else {
-            writer.style(inner, 1).color = style.0.color;
+            writer.color(inner, 1).0 = *color.0;
         }
     }
 }
@@ -752,30 +764,46 @@ fn show_hide_placeholder(
     }
 }
 
-fn update_style(
+fn update_font(
     mut input_query: Query<
-        (Entity, &TextInputTextStyle, &TextInputInactive),
-        Changed<TextInputTextStyle>,
+        (Entity, &TextInputTextFont, &TextInputInactive),
+        Changed<TextInputTextFont>,
     >,
     inner_text: InnerText,
     mut writer: UiTextWriter,
 ) {
-    for (entity, style, inactive) in &mut input_query {
+    for (entity, font, inactive) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
             continue;
         };
 
-        *writer.style(inner, 0) = style.0.clone();
-        *writer.style(inner, 1) = TextStyle {
-            font: CURSOR_HANDLE,
-            color: if inactive.0 {
+        *writer.font(inner, 0) = font.0.clone();
+        *writer.font(inner, 1) = font.0.clone();
+        *writer.font(inner, 2) = font.0.clone();
+    }
+}
+
+fn update_color(
+    mut input_query: Query<
+        (Entity, &TextInputTextColor, &TextInputInactive),
+        Changed<TextInputTextColor>,
+    >,
+    inner_text: InnerText,
+    mut writer: UiTextWriter,
+) {
+    for (entity, color, inactive) in &mut input_query {
+        let Some(inner) = inner_text.inner_entity(entity) else {
+            continue;
+        };
+
+        *writer.color(inner, 0) = color.0;
+        *writer.color(inner, 1) = TextColor(
+            if inactive.0 {
                 Color::NONE
             } else {
-                style.0.color
-            },
-            ..style.0.clone()
-        };
-        *writer.style(inner, 2) = style.0.clone();
+                *color.0
+            });
+        *writer.color(inner, 2) = color.0;
     }
 }
 
@@ -816,10 +844,7 @@ fn masked_value(value: &str, mask: Option<char>) -> String {
     )
 }
 
-fn placeholder_style(style: &TextStyle) -> TextStyle {
-    let color = style.color.with_alpha(style.color.alpha() * 0.25);
-    TextStyle {
-        color,
-        ..style.clone()
-    }
+fn placeholder_style(font: &TextFont, color: &TextColor) -> (TextFont, TextColor) {
+    let color = color.with_alpha(color.alpha() * 0.25);
+    (font.clone(), TextColor(color))
 }
