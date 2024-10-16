@@ -441,7 +441,7 @@ fn update_value(
         Or<(Changed<TextInputValue>, Changed<TextInputCursorPos>)>,
     >,
     inner_text: InnerText,
-    mut writer: UiTextWriter,
+    mut writer: TextUiWriter,
 ) {
     for (entity, text_input, settings, mut cursor_pos) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
@@ -682,7 +682,7 @@ fn show_hide_cursor(
         Changed<TextInputInactive>,
     >,
     inner_text: InnerText,
-    mut writer: UiTextWriter,
+    mut writer: TextUiWriter,
 ) {
     for (entity, color, mut cursor_timer, inactive) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
@@ -708,7 +708,7 @@ fn blink_cursor(
         Ref<TextInputInactive>,
     )>,
     inner_text: InnerText,
-    mut writer: UiTextWriter,
+    mut writer: TextUiWriter,
     time: Res<Time>,
 ) {
     for (entity, color, mut cursor_timer, inactive) in &mut input_query {
@@ -768,7 +768,7 @@ fn update_font(
         Changed<TextInputTextFont>,
     >,
     inner_text: InnerText,
-    mut writer: UiTextWriter,
+    mut writer: TextUiWriter,
 ) {
     for (entity, font) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
@@ -787,7 +787,7 @@ fn update_color(
         Changed<TextInputTextColor>,
     >,
     inner_text: InnerText,
-    mut writer: UiTextWriter,
+    mut writer: TextUiWriter,
 ) {
     for (entity, color, inactive) in &mut input_query {
         let Some(inner) = inner_text.inner_entity(entity) else {
