@@ -25,14 +25,12 @@ fn setup(mut commands: Commands) {
 
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node::default(),
+            Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             // Make this container node bundle to be Interactive so that clicking on it removes
@@ -41,20 +39,18 @@ fn setup(mut commands: Commands) {
         ))
         .with_children(|parent| {
             parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(200.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        padding: UiRect::all(Val::Px(5.0)),
-                        ..default()
-                    },
-                    border_color: BORDER_COLOR_INACTIVE.into(),
-                    background_color: BACKGROUND_COLOR.into(),
-                    // Prevent clicks on the input from also bubbling down to the container
-                    // behind it
-                    focus_policy: bevy::ui::FocusPolicy::Block,
+                Node::default(),
+                Style {
+                    width: Val::Px(200.0),
+                    border: UiRect::all(Val::Px(5.0)),
+                    padding: UiRect::all(Val::Px(5.0)),
                     ..default()
                 },
+                BorderColor(BORDER_COLOR_INACTIVE.into()),
+                BackgroundColor(BACKGROUND_COLOR.into()),
+                // Prevent clicks on the input from also bubbling down to the container
+                // behind it
+                bevy::ui::FocusPolicy::Block,
                 TextInput,
                 TextInputTextFont(TextFont {
                     font_size: 34.,

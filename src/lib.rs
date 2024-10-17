@@ -665,13 +665,11 @@ fn create(
 
         let overflow_container = commands
             .spawn((
-                NodeBundle {
-                    style: Style {
-                        overflow: Overflow::clip(),
-                        justify_content: JustifyContent::FlexEnd,
-                        max_width: Val::Percent(100.),
-                        ..default()
-                    },
+                Node::default(),
+                Style {
+                    overflow: Overflow::clip(),
+                    justify_content: JustifyContent::FlexEnd,
+                    max_width: Val::Percent(100.),
                     ..default()
                 },
                 Name::new("TextInputOverflowContainer"),

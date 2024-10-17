@@ -23,29 +23,26 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
     commands
-        .spawn(NodeBundle {
-            style: Style {
+        .spawn((
+            Node::default(),
+            Style {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()
-            },
-            ..default()
-        })
+            }))
         .with_children(|parent| {
             parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(200.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        padding: UiRect::all(Val::Px(5.0)),
-                        ..default()
-                    },
-                    border_color: BORDER_COLOR_ACTIVE.into(),
-                    background_color: BACKGROUND_COLOR.into(),
+                Node::default(),
+                Style {
+                    width: Val::Px(200.0),
+                    border: UiRect::all(Val::Px(5.0)),
+                    padding: UiRect::all(Val::Px(5.0)),
                     ..default()
                 },
+                BorderColor(BORDER_COLOR_ACTIVE.into()),
+                BackgroundColor(BACKGROUND_COLOR.into()),
                 TextInput,
                 TextInputTextFont(TextFont {
                     font_size: 34.,
