@@ -18,7 +18,7 @@
 //!
 //! fn setup(mut commands: Commands) {
 //!     commands.spawn(Camera2d);
-//!     commands.spawn((NodeBundle::default(), TextInput));
+//!     commands.spawn((Node::default(), TextInput));
 //! }
 //! ```
 
@@ -92,7 +92,7 @@ const CURSOR_HANDLE: Handle<Font> = Handle::weak_from_u128(10482756907980398621)
 /// # use bevy::prelude::*;
 /// use bevy_simple_text_input::TextInput;
 /// fn setup(mut commands: Commands) {
-///     commands.spawn((NodeBundle::default(), TextInput));
+///     commands.spawn((Node::default(), TextInput));
 /// }
 /// ```
 #[derive(Component)]
@@ -473,20 +473,20 @@ fn scroll_with_cursor(
     mut inner_text_query: Query<
         (
             &TextLayoutInfo,
-            &mut Style,
-            &Node,
+            &mut Node,
+            &ComputedNode,
             &Parent,
             Option<&TargetCamera>,
         ),
         (With<TextInputInner>, Changed<TextLayoutInfo>),
     >,
-    mut style_query: Query<(&Node, &mut Style), Without<TextInputInner>>,
+    mut style_query: Query<(&mut Node, &ComputedNode), Without<TextInputInner>>,
     camera_query: Query<&Camera>,
     window_query: Query<&Window>,
     primary_window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    for (layout, mut style, child_node, parent, target_camera) in inner_text_query.iter_mut() {
-        let Ok((parent_node, mut parent_style)) = style_query.get_mut(parent.get()) else {
+    for (layout, mut style, child_computed, parent, target_camera) in inner_text_query.iter_mut() {
+        let Ok((mut parent_style, parent_computed)) = style_query.get_mut(parent.get()) else {
             continue;
         };
 
@@ -503,8 +503,8 @@ fn scroll_with_cursor(
         }
 
         // if cursor is in the middle, we use FlexStart + `left` px for consistent behaviour when typing the middle
-        let child_size = child_node.size().x;
-        let parent_size = parent_node.size().x;
+        let child_size = child_computed.size().x;
+        let parent_size = parent_computed.size().x;
 
         let Some(cursor_pos) = layout
             .glyphs
@@ -656,7 +656,7 @@ fn create(
                 } else {
                     Visibility::Hidden
                 },
-                Style {
+                Node {
                     position_type: PositionType::Absolute,
                     ..default()
                 },
@@ -665,8 +665,7 @@ fn create(
 
         let overflow_container = commands
             .spawn((
-                Node::default(),
-                Style {
+                Node {
                     overflow: Overflow::clip(),
                     justify_content: JustifyContent::FlexEnd,
                     max_width: Val::Percent(100.),

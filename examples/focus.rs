@@ -25,8 +25,7 @@ fn setup(mut commands: Commands) {
 
     commands
         .spawn((
-            Node::default(),
-            Style {
+            Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 align_items: AlignItems::Center,
@@ -39,8 +38,7 @@ fn setup(mut commands: Commands) {
         ))
         .with_children(|parent| {
             parent.spawn((
-                Node::default(),
-                Style {
+                Node {
                     width: Val::Px(200.0),
                     border: UiRect::all(Val::Px(5.0)),
                     padding: UiRect::all(Val::Px(5.0)),

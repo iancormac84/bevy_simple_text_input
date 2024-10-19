@@ -34,20 +34,18 @@ fn setup(mut commands: Commands) {
     let text_color = TextColor(TEXT_COLOR);
 
     commands
-        .spawn((
-            Node::default(),
-            Style {
+        .spawn(
+            Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 column_gap: Val::Px(10.),
                 ..default()
-            }))
+            })
         .with_children(|parent| {
             parent.spawn((
-                Node::default(),
-                Style {
+                Node {
                     width: Val::Px(200.0),
                     border: UiRect::all(Val::Px(5.0)),
                     padding: UiRect::all(Val::Px(5.0)),
@@ -68,7 +66,7 @@ fn setup(mut commands: Commands) {
             parent
                 .spawn((
                     Button,
-                    Style {
+                    Node {
                         width: Val::Px(50.),
                         border: UiRect::all(Val::Px(5.0)),
                         padding: UiRect::all(Val::Px(5.0)),
